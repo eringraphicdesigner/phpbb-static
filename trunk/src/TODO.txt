@@ -1,0 +1,6 @@
+TODO
+====
+
+1. Make $filter_topic usable
+2. Add possibility to use different table prefix instead of the standard phpbb_
+
