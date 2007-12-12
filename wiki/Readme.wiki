@@ -1,0 +1,26 @@
+#summary Short explanation on how to use this script.
+#labels Phase-Deploy,Featured
+
+= Requirements =
+
+ #. php5-cli
+ #. php5-mysql
+ #. PEAR's HTML_BBCodeParser (http://pear.php.net/package/HTML_BBCodeParser)
+
+= Usage =
+
+ #. Edit config.php. Set your database configuration
+ #. Create static/ directory
+{{{
+$ mkdir static
+}}}
+ #. Run convert.php script
+{{{
+$ php convert.php
+}}}
+ #. Copy resources (css, js, etc)
+{{{
+$ cp templates/res/* static/
+}}}
+ #. Point your browser to static/ directory
+ #. That's all :)
