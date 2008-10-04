@@ -1,11 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
-<html><head><title>Forum @ Linux.Or.Id</title>
+<html><head><title><?=$forum_name;?></title>
 <link rel="stylesheet" type="text/css" href="main.css"/>
 </head><body>
 
-<h1>Forum @ Linux.Or.Id</h1>
-<h2>Forum Pengguna Linux Indonesia</h2>
+<h1><?=$forum_name;?></h1>
+<h2><?=$forum_description;?></h2>
 
 <table cellspacing="1" cellpadding="0" border="0">
 <tr><th class="t">Forum</th>

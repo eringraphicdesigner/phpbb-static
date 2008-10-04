@@ -6,7 +6,7 @@ global $bb;
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
 <html><head>
-<title><?=$title;?></title>
+<title><?=$title;?> - <?=$forum_name;?></title>
 <link rel="stylesheet" type="text/css" href="../topic.css"/>
 </head><body>
 
@@ -17,7 +17,7 @@ global $bb;
 <h1><?=$title;?></h1>
 
 <div class="original"><p>Live forum: 
-	<a href="http://forum.linux.or.id/viewtopic.php?t=<?=$tid;?>">http://forum.linux.or.id/viewtopic.php?t=<?=$tid;?></a>
+	<a href="<?=$url;?>"><?=$url;?></a>
 </p></div>
 
 <?

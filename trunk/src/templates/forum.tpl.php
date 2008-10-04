@@ -1,6 +1,6 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
 "http://www.w3.org/TR/html4/loose.dtd">
-<html><head><title><?=$ftitle;?> - Forum @ Linux.Or.Id</title>
+<html><head><title><?=$forum_title;?> - <?=$forum_name;?></title>
 <script type="text/javascript" src="../jquery.js"></script>
 <script type="text/javascript" src="../jquery.tablesorter.js"></script>
 <script type="text/javascript" src="../jquery.tablesorter.pager.js"></script>
@@ -9,11 +9,11 @@
 </head><body onload="load('forum')">
 
 <div id="header">
-<p class="h"><a href="../index.html">Forum @ Linux.Or.Id</a></p>
-<p class="d">Forum Pengguna Linux Indonesia</p>
+<p class="h"><a href="../index.html"><?=$forum_name;?></a></p>
+<p class="d"><?=$forum_description;?></p>
 </div>
 
-<h1><?=$ftitle;?></h1>
+<h1><?=$forum_title;?></h1>
 
 <table id="topics" cellspacing="1" cellpadding="0" border="0">
 <thead>

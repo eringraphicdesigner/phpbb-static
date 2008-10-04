@@ -3,21 +3,27 @@
 require_once('config.php');
 require_once('common.php');
 
+$forum_url = trim($forum_url, '/');
+
 function generate_topics() {
 	global $topics, $forums;
+	global $db_prefix;
+	global $forum_name, $forum_url;
 
-	log_info("Wrote (topics):");
+	log_info("Topics:");
 
 	while (list($tid, $topic) = each($topics)) {
 		
 		$fid = $topics[$tid]['fid'];
 		$var = array();
+		$var['forum_name'] = $forum_name;
 		$var['forum_title'] = $forums[$fid]['title'];
 		$var['title'] = $topics[$tid]['title'];
 		$var['tid'] = $tid;
+		$var['url'] = $forum_url . '/viewtopic.php?t=' . $tid;
 		$var['posts'] = array();
 
-		$res = mysql_query('SELECT p.post_id, p.poster_id, p.post_username, u.username, p.post_time, pt.post_subject, pt.post_text, pt.bbcode_uid FROM phpbb_posts p LEFT JOIN phpbb_users u ON p.poster_id=u.user_id LEFT JOIN phpbb_posts_text pt ON p.post_id=pt.post_id WHERE p.topic_id=' . $tid . ' ORDER BY p.post_time ASC');
+		$res = mysql_query('SELECT p.post_id, p.poster_id, p.post_username, u.username, p.post_time, pt.post_subject, pt.post_text, pt.bbcode_uid FROM '.$db_prefix.'posts p LEFT JOIN '.$db_prefix.'users u ON p.poster_id=u.user_id LEFT JOIN '.$db_prefix.'posts_text pt ON p.post_id=pt.post_id WHERE p.topic_id=' . $tid . ' ORDER BY p.post_time ASC');
 
 		while ($row = mysql_fetch_assoc($res)) {
 			$var['posts'][] = array(
@@ -41,8 +47,10 @@ function generate_topics() {
 function generate_forums() {
 	global $forums, $topics;
 	global $filter_forum, $filter_topic;
+	global $db_prefix;
+	global $forum_name, $forum_description;
 
-	$res = mysql_query('SELECT t.forum_id, t.topic_id, t.topic_title, t.topic_time, t.topic_replies, u.username FROM phpbb_topics t LEFT JOIN phpbb_users u ON t.topic_poster=u.user_id WHERE t.topic_moved_id = 0 ORDER BY t.topic_time DESC');
+	$res = mysql_query('SELECT t.forum_id, t.topic_id, t.topic_title, t.topic_time, t.topic_replies, u.username FROM '.$db_prefix.'topics t LEFT JOIN '.$db_prefix.'users u ON t.topic_poster=u.user_id WHERE t.topic_moved_id = 0 ORDER BY t.topic_time DESC');
 
 	while ($row = mysql_fetch_assoc($res)) {
 		$fid = $row['forum_id'];
@@ -61,11 +69,14 @@ function generate_forums() {
 		$forums[$fid]['topics'][] = $row['topic_id'];
 	}
 
-	log_info("Wrote (forum index):");
+	log_info("Forum index:");
 	while (list($fid, $forum) = each($forums)) {
 		$var = array(
-			'topics' => $topics,
-			'list'   => $forums[$fid]['topics'],
+			'topics'            => $topics,
+			'list'              => $forums[$fid]['topics'],
+			'forum_name'        => $forum_name,
+			'forum_title'       => $forums[$fid]['title'],
+			'forum_description' => $forum_description
 		);
 
 		$content = template_get($var, 'forum.tpl.php');
@@ -80,9 +91,11 @@ function generate_forums() {
 function generate_main() {
 	global $categories, $forums;
 	global $filter_forum, $filter_topic;
+	global $db_prefix;
+	global $forum_name, $forum_description;
 
 	//Categories
-	$res = mysql_query('SELECT cat_id, cat_title FROM phpbb_categories order by cat_order');
+	$res = mysql_query('SELECT cat_id, cat_title FROM '.$db_prefix.'categories order by cat_order');
 
 	while ($row = mysql_fetch_assoc($res)) {
 		$cid = $row['cat_id'];
@@ -93,7 +106,7 @@ function generate_main() {
 	}
 
 	//Forums
-	$res = mysql_query('SELECT forum_id, cat_id, forum_name, forum_posts, forum_topics FROM phpbb_forums ORDER BY forum_order');
+	$res = mysql_query('SELECT forum_id, cat_id, forum_name, forum_posts, forum_topics FROM '.$db_prefix.'forums ORDER BY forum_order');
 
 	while ($row = mysql_fetch_assoc($res)) {
 		$fid = $row['forum_id'];
@@ -114,14 +127,16 @@ function generate_main() {
 
 	// Content
 	$var = array(
-		'categories' => $categories,
-		'forums'     => $forums
+		'categories'        => $categories,
+		'forums'            => $forums,
+		'forum_name'        => $forum_name,
+		'forum_description' => $forum_description
 	);
 	$content = template_get($var, 'main.tpl.php');
 
 	write_content('index.html', $content);
 
-	log_info("Wrote: index.html\n");
+	log_info("Index: index.html\n");
 
 }
 
