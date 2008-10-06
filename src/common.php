@@ -31,7 +31,7 @@ function write_content($file, $content) {
 	$dir = dirname($target);
 
 	if (!is_dir($dir)) {
-		mkdir($dir, 0755, true);
+		mkdir($dir, 0755);
 	}
 
 	$f = fopen($target, 'w');

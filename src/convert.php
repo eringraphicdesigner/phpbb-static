@@ -5,10 +5,70 @@ require_once('common.php');
 
 $forum_url = trim($forum_url, '/');
 
+function get_forums_tree() {
+	global $categories, $forums_tree, $forums_top;
+	global $phpbb_version;
+	global $db_prefix;
+
+	if ($phpbb_version == PHPBB2) {
+		$res = mysql_query('SELECT forum_id, cat_id FROM '.$db_prefix.'forums');
+
+		while ($row = mysql_fetch_assoc($res)) {
+			$forums_tree[$row['forum_id']] = array(
+				'parent_id' => -1,
+				'cat_id'    => $row['cat_id'],
+				'children'  => array()
+			);
+
+			$forums_top[] = $row['forum_id'];
+		}
+	}
+	else if ($phpbb_version == PHPBB3) {
+		$res = mysql_query('SELECT forum_id, parent_id FROM '.$db_prefix.'forums');
+
+		while ($row = mysql_fetch_assoc($res)) {
+			$forums_tree[$row['forum_id']] = array(
+				'parent_id' => $row['parent_id'],
+				'children'  => array()
+			);
+		}
+
+		$cat_ids = array();
+
+		while (list($fid, $forum) = each($forums_tree)) {
+			$parent_id = $forum['parent_id'];
+
+			if ($parent_id != 0) {
+
+				while ($parent_id != 0) {
+					$cat_id = $parent_id;
+					$parent_id = $forums_tree[$parent_id]['parent_id'];
+				}
+
+				$forums_tree[$fid]['cat_id'] = $cat_id;
+
+			}
+			else {
+				$cat_ids[] = $fid;
+			}
+
+		}
+
+		foreach ($cat_ids as $cat_id) {
+			foreach ($forums_tree[$cat_id]['children'] as $fid) {
+				$forums_top[] = $fid;
+			}
+		}
+
+	}
+
+}
+
 function generate_topics() {
 	global $topics, $forums;
 	global $db_prefix;
 	global $forum_name, $forum_url;
+	global $phpbb_version;
 
 	log_info("Topics:");
 
@@ -23,7 +83,12 @@ function generate_topics() {
 		$var['url'] = $forum_url . '/viewtopic.php?t=' . $tid;
 		$var['posts'] = array();
 
-		$res = mysql_query('SELECT p.post_id, p.poster_id, p.post_username, u.username, p.post_time, pt.post_subject, pt.post_text, pt.bbcode_uid FROM '.$db_prefix.'posts p LEFT JOIN '.$db_prefix.'users u ON p.poster_id=u.user_id LEFT JOIN '.$db_prefix.'posts_text pt ON p.post_id=pt.post_id WHERE p.topic_id=' . $tid . ' ORDER BY p.post_time ASC');
+		if ($phpbb_version == PHPBB2) {
+			$res = mysql_query('SELECT p.post_id, p.poster_id, p.post_username, u.username, p.post_time, pt.post_subject, pt.post_text, pt.bbcode_uid FROM '.$db_prefix.'posts p LEFT JOIN '.$db_prefix.'users u ON p.poster_id=u.user_id LEFT JOIN '.$db_prefix.'posts_text pt ON p.post_id=pt.post_id WHERE p.topic_id=' . $tid . ' ORDER BY p.post_time ASC');
+		}
+		else if ($phpbb_version == PHPBB3) {
+			$res = mysql_query('SELECT p.post_id, p.poster_id, p.post_username, u.username, p.post_time, p.post_subject, p.post_text, p.bbcode_uid FROM '.$db_prefix.'posts p LEFT JOIN '.$db_prefix.'users u ON p.poster_id=u.user_id WHERE p.topic_id=' . $tid . ' ORDER BY p.post_time ASC');
+		}
 
 		while ($row = mysql_fetch_assoc($res)) {
 			$var['posts'][] = array(
@@ -89,13 +154,22 @@ function generate_forums() {
 }
 
 function generate_main() {
-	global $categories, $forums;
+	global $categories, $forums, $forums_tree;
 	global $filter_forum, $filter_topic;
 	global $db_prefix;
 	global $forum_name, $forum_description;
+	global $phpbb_version;
 
 	//Categories
-	$res = mysql_query('SELECT cat_id, cat_title FROM '.$db_prefix.'categories order by cat_order');
+	if ($phpbb_version == PHPBB2) {
+		$res = mysql_query('SELECT cat_id, cat_title FROM '.$db_prefix.'categories ORDER BY cat_order');
+	}
+	else if ($phpbb_version == PHPBB3) {
+		//FIXME: fix ordering
+		$res = mysql_query('SELECT forum_id AS cat_id, forum_name AS cat_title FROM '.$db_prefix.'forums WHERE parent_id=0 ORDER BY left_id');
+	}
+
+	print mysql_error();
 
 	while ($row = mysql_fetch_assoc($res)) {
 		$cid = $row['cat_id'];
@@ -106,7 +180,15 @@ function generate_main() {
 	}
 
 	//Forums
-	$res = mysql_query('SELECT forum_id, cat_id, forum_name, forum_posts, forum_topics FROM '.$db_prefix.'forums ORDER BY forum_order');
+	get_forums_tree();
+
+	if ($phpbb_version == PHPBB2) {
+		$res = mysql_query('SELECT forum_id, forum_name, forum_posts, forum_topics FROM '.$db_prefix.'forums ORDER BY forum_order');
+	}
+	else if ($phpbb_version == PHPBB3) {
+		//FIXME: fix ordering
+		$res = mysql_query('SELECT forum_id, forum_name, forum_posts, forum_topics FROM '.$db_prefix.'forums WHERE parent_id<>0 ORDER BY left_id');
+	}
 
 	while ($row = mysql_fetch_assoc($res)) {
 		$fid = $row['forum_id'];
@@ -115,14 +197,17 @@ function generate_main() {
 			continue;
 		}
 
+		$cat_id = $forums_tree[$fid]['cat_id'];
+
 		$forums[$fid] = array(
-			'cid'     => $row['cat_id'],
+			'cid'     => $cid,
 			'title'   => $row['forum_name'],
 			'nposts'  => $row['forum_posts'],
 			'ntopics' => $row['forum_topics'],
 			'topics'  => array()
 		);
-		$categories[$row['cat_id']]['forums'][] = $fid;
+
+		$categories[$cat_id]['forums'][] = $fid;
 	}
 
 	// Content
@@ -146,6 +231,8 @@ mysql_select_db($db_name);
 $categories = array();
 $forums = array();
 $topics = array();
+$forums_tree = array();
+$forums_top = array();
 
 generate_main();
 generate_forums();
