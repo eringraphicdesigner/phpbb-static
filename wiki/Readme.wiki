@@ -20,7 +20,7 @@ $ php convert.php
 }}}
  #. Copy resources (css, js, etc)
 {{{
-$ cp templates/res/* static/
+$ cp -a templates/res/* static/
 }}}
  #. Point your browser to static/ directory
  #. That's all :)
